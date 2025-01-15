@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  creationTimestamp: null
+  name: crossplane-boostrap
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/dktodorov/crossplane.git
+        revision: HEAD
+        requeueAfterSeconds: 20
+        directories:
+          - path: crossplane/overlays/dev
+  syncPolicy: {}
+  template:
+    metadata:
+      name: crossplane-boostrap
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/dktodorov/crossplane.git
+        path: crossplane/overlays/dev
+        targetRevision: HEAD
+      destination:
+        namespace: "crossplane-system"
+        server: 'https://kubernetes.default.svc'
+      ignoreDifferences:
+        - group: argoproj.io
+          jsonPointers:
+            - /status
+          kind: Application
+      syncPolicy:
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+status: {}
